@@ -22,6 +22,7 @@ module register_file #(
         internal_reg_out = 0;
         
         if(system_reg_we) begin
+            //write
             registers[system_reg_addr] = system_reg_din;
         end
         //both can read simultaneously

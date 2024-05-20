@@ -17,16 +17,15 @@ module register_file #(
 );
     logic [DATA_WIDTH - 1 : 0] registers [2 ** ADDR_WIDTH];
 
-    always_comb begin
+    always_latch begin
         system_reg_dout = 0;
         internal_reg_out = 0;
-        if(system_reg_we && internal_read) begin
-            //read, then write
-            internal_reg_out = registers[internal_reg_addr];
-            registers[internal_reg]
-        end
         
-        if(system_reg_en) begin
+        if(system_reg_we) begin
+            registers[system_reg_addr] = system_reg_din;
+        end
+        //both can read simultaneously
+        if(system_reg_en && ~system_reg_we) begin
             //system register read
             system_reg_dout = registers[system_reg_addr];
         end

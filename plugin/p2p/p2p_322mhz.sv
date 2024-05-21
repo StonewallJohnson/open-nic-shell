@@ -132,8 +132,8 @@ module p2p_322mhz #(
 
   axi_lite_register #(
     .CLOCKING_MODE("common_clock"),
-    .ADDR_WIDTH(REG_ADDR_WIDTH),
-    .DATA_WIDTH(REG_DATA_WIDTH)
+    .ADDR_W(REG_ADDR_WIDTH),
+    .DATA_W(REG_DATA_WIDTH)
   ) system_config_reg_interface (
     .s_axil_awvalid (s_axil_awvalid),
     .s_axil_awaddr  (s_axil_awaddr),
@@ -158,8 +158,8 @@ module p2p_322mhz #(
     .reg_din        (system_reg_din),
     .reg_dout       (system_reg_dout),
 
-    .aclk           (axil_aclk),
-    .aresetn        (axil_aresetn),
+    .axil_aclk           (axil_aclk),
+    .axil_aresetn        (axil_aresetn),
     .reg_clk        (axil_aclk),
     .reg_rstn       (axil_aresetn)
   );
@@ -172,7 +172,7 @@ module p2p_322mhz #(
   //check the register
   localparam int BLOCK_RX_REG = 1;
   assign internal_read = 1;
-  assign internal_reg_addr = 1;
+  assign internal_reg_addr = BLOCK_RX_REG;
 
   register_file #(
     .ADDR_WIDTH(REG_ADDR_WIDTH),

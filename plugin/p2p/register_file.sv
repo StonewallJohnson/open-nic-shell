@@ -25,6 +25,10 @@ module register_file #(
     - Make configurable for a given number of internal clients. Would make it possible
     for both CMAC interfaces to read simultaneously
     **/
+    initial begin
+        registers[1] = 0;
+        
+    end
 
     always_latch begin
         system_reg_dout = 0;

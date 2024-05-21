@@ -1,11 +1,14 @@
-interface axil;
+interface axil ();
     logic awvalid;
     logic [31:0] awaddr;
     logic awready;
     logic wvalid;
     logic [31:0] wdata;
+    logic wlast;
     logic wready;
     logic bvalid;
+    logic [1:0] bresp;
+    logic bready;
     logic arvalid;
     logic [31:0] araddr;
     logic arready;
@@ -20,6 +23,7 @@ interface axil;
         output awready,
         input wvalid,
         input wdata,
+        input wlast,
         output wready,
         output bvalid,
         output bresp,
@@ -39,6 +43,7 @@ interface axil;
         input awready, 
         output wvalid,
         output wdata,
+        output wlast,
         input wready, 
         input bvalid, 
         input bresp, 
@@ -53,7 +58,7 @@ interface axil;
     );
 endinterface
 
-interface axis #(parameter int NUM_CMAC_PORT = 1);
+interface axis #(parameter int NUM_CMAC_PORT = 1) ();
     logic [NUM_CMAC_PORT-1:0] tvalid;
     logic [512*NUM_CMAC_PORT-1:0] tdata;
     logic [64*NUM_CMAC_PORT-1:0] tkeep;
@@ -80,14 +85,21 @@ interface axis #(parameter int NUM_CMAC_PORT = 1);
     );
 endinterface
 
+`include "open_nic_shell_macros.vh"
+`timescale 1ns/1ps
 module box_tb ();
+    /**
+    TODO: 
+    Make this take tx input from a file (for each cmac and adapter pair). Will
+    likely require a master and slave (axil and axis) module that can facilitate that communication
+    **/
     localparam int NUM_CMAC_PORT = 2;
 
-    axil system_if;
-    axis adap_box;
-    axis box_adap;
-    axis cmac_box;
-    axis box_cmac;
+    axil system_if ();
+    axis #(.NUM_CMAC_PORT(NUM_CMAC_PORT)) adap_box ();
+    axis #(.NUM_CMAC_PORT(NUM_CMAC_PORT)) box_adap ();
+    axis #(.NUM_CMAC_PORT(NUM_CMAC_PORT)) cmac_box ();
+    axis #(.NUM_CMAC_PORT(NUM_CMAC_PORT)) box_cmac ();
 
     logic mod_rstn;
     logic mod_rst_done;
@@ -100,7 +112,7 @@ module box_tb ();
         .s_axil_awaddr                  (system_if.s.awaddr),
         .s_axil_awready                 (system_if.s.awready),
         .s_axil_wvalid                  (system_if.s.wvalid),
-        .s_axil_data                    (system_if.s.wdata),
+        .s_axil_wdata                    (system_if.s.wdata),
         .s_axil_wready                  (system_if.s.wready),
         .s_axil_bvalid                  (system_if.s.bvalid),
         .s_axil_bresp                   (system_if.s.bresp),
@@ -146,5 +158,144 @@ module box_tb ();
         .cmac_clk                       (cmac_clk)
     );
 
+    initial begin
+    //     mvc(system_if.m, adap_box.m, box_adap.s, cmac_box.m, box_cmac.s, axil_aclk, cmac_clk);
+    //     $finish;
+    // end
+
+    // task automatic mvc(
+    //     ref system_if,
+    //     ref adap_box,
+    //     ref box_adap,
+    //     axis cmac_box,
+    //     ref box_cmac,
+
+    //     ref axil_aclk,
+    //     ref cmac_clk
+    // );
+        tick_cmac_clk(cmac_clk);
+        /**
+        just a normal rx
+        **/
+        cmac_box.m.tvalid[0] = 1;
+        cmac_box.m.tvalid[1] = 1;
+        cmac_box.m.tdata[`getvec(512, 0)] = 512'h1;
+        cmac_box.m.tdata[`getvec(512, 1)] = 512'h2;
+        cmac_box.m.tkeep[`getvec(64, 0)] = 64'hffffffffffffffff;
+        cmac_box.m.tkeep[`getvec(64, 1)] = 64'hffffffffffffffff;
+        cmac_box.m.tlast[0] = 1;
+        cmac_box.m.tlast[1] = 1;
+        cmac_box.m.tuser_err[0] = 0;
+        cmac_box.m.tuser_err[1] = 0;
+
+        tick_cmac_clk(cmac_clk);
+
+        cmac_box.m.tvalid[0] = 0;
+        cmac_box.m.tvalid[1] = 0;
+        cmac_box.m.tdata[`getvec(512, 0)] = 0;
+        cmac_box.m.tdata[`getvec(512, 1)] = 0;
+        cmac_box.m.tkeep[`getvec(64, 0)] = 64'h0;
+        cmac_box.m.tkeep[`getvec(64, 1)] = 64'h0;
+        cmac_box.m.tlast[0] = 0;
+        cmac_box.m.tlast[1] = 0;
+        cmac_box.m.tuser_err[0] = 0;
+        cmac_box.m.tuser_err[1] = 0;
+
+        tick_cmac_clk(cmac_clk);
+        tick_cmac_clk(cmac_clk);
+
+        /**
+        write to the block_rx register
+        **/
+        tick_axil_clk(axil_aclk);
+        system_if.m.awvalid = 1;
+        system_if.m.awaddr = 1;
+        
+        tick_axil_clk(axil_aclk);
+
+        system_if.m.awvalid = 0;
+        system_if.m.awaddr = 0;
+
+        system_if.m.wvalid = 1;
+        system_if.m.wdata = 1;
+        system_if.m.wlast = 1;
+        system_if.m.bready = 1;
+        tick_axil_clk(axil_aclk);
+        system_if.m.wvalid = 0;
+        system_if.m.wdata = 0;
+        system_if.m.wlast = 0;
+        //should see bvalid == 1 and bresp == 0 at some point after this 
+        
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        tick_axil_clk(axil_aclk);
+        
+        /**
+        try another rx
+        **/
+        cmac_box.m.tvalid[0] = 1;
+        cmac_box.m.tvalid[1] = 1;
+        cmac_box.m.tdata[`getvec(512, 0)] = 512'h1;
+        cmac_box.m.tdata[`getvec(512, 1)] = 512'h2;
+        cmac_box.m.tkeep[`getvec(64, 0)] = 64'hffffffffffffffff;
+        cmac_box.m.tkeep[`getvec(64, 1)] = 64'hffffffffffffffff;
+        cmac_box.m.tlast[0] = 1;
+        cmac_box.m.tlast[1] = 1;
+        cmac_box.m.tuser_err[0] = 0;
+        cmac_box.m.tuser_err[1] = 0;
+
+        tick_cmac_clk(cmac_clk);
+
+        cmac_box.m.tvalid[0] = 0;
+        cmac_box.m.tvalid[1] = 0;
+        cmac_box.m.tdata[`getvec(512, 0)] = 0;
+        cmac_box.m.tdata[`getvec(512, 1)] = 0;
+        cmac_box.m.tkeep[`getvec(64, 0)] = 64'h0;
+        cmac_box.m.tkeep[`getvec(64, 1)] = 64'h0;
+        cmac_box.m.tlast[0] = 0;
+        cmac_box.m.tlast[1] = 0;
+        cmac_box.m.tuser_err[0] = 0;
+        cmac_box.m.tuser_err[1] = 0;
+
+        tick_cmac_clk(cmac_clk);
+        tick_cmac_clk(cmac_clk);
+
+        //$finish;
+
+    //endtask
+    end
+
+    task automatic tick_cmac_clk(
+        ref [1:0] cmac_clk
+    );
+        cmac_clk[0] = 1;
+        cmac_clk[1] = 1;
+        #1;
+        cmac_clk[0] = 0;
+        cmac_clk[1] = 0;
+        #1;
+    endtask
+
+    task automatic tick_axil_clk(
+        ref axil_aclk
+    );
+        axil_aclk = 1;
+        #1;
+        axil_aclk = 0;
+        #1;
+    endtask
 
 endmodule

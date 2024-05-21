@@ -17,6 +17,13 @@ module register_file #(
 );
     logic [DATA_WIDTH - 1 : 0] registers [2 ** ADDR_WIDTH];
 
+    /**
+    TODO:
+    An initial block here that reads from a file (readmemb/h) to initialize
+    the contents of the registers. Use a module parameter for the path to the
+    file?
+    **/
+
     always_latch begin
         system_reg_dout = 0;
         internal_reg_out = 0;

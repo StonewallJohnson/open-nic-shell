@@ -96,10 +96,45 @@ module p2p_322mhz #(
     .rstn         ({cmac_rstn, axil_aresetn})
   );
 
-  axi_lite_slave #(
-    .REG_ADDR_W (12),
-    .REG_PREFIX (16'hB001)
-  ) reg_inst (
+  // axi_lite_slave #(
+  //   .REG_ADDR_W (12),
+  //   .REG_PREFIX (16'hB001)
+  // ) reg_inst (
+  //   .s_axil_awvalid (s_axil_awvalid),
+  //   .s_axil_awaddr  (s_axil_awaddr),
+  //   .s_axil_awready (s_axil_awready),
+  //   .s_axil_wvalid  (s_axil_wvalid),
+  //   .s_axil_wdata   (s_axil_wdata),
+  //   .s_axil_wready  (s_axil_wready),
+  //   .s_axil_bvalid  (s_axil_bvalid),
+  //   .s_axil_bresp   (s_axil_bresp),
+  //   .s_axil_bready  (s_axil_bready),
+  //   .s_axil_arvalid (s_axil_arvalid),
+  //   .s_axil_araddr  (s_axil_araddr),
+  //   .s_axil_arready (s_axil_arready),
+  //   .s_axil_rvalid  (s_axil_rvalid),
+  //   .s_axil_rdata   (s_axil_rdata),
+  //   .s_axil_rresp   (s_axil_rresp),
+  //   .s_axil_rready  (s_axil_rready),
+
+  //   .aclk           (axil_aclk),
+  //   .aresetn        (axil_aresetn)
+  // );
+
+  localparam int REG_ADDR_WIDTH = 12;
+  localparam int REG_DATA_WIDTH = 32;
+  //register file system interface
+  wire sytsem_reg_en;
+  wire system_reg_we;
+  wire [REG_ADDR_WIDTH - 1 : 0] system_reg_addr;
+  wire [REG_DATA_WIDTH - 1 : 0] system_reg_din;
+  wire [REG_DATA_WIDTH - 1 : 0] system_reg_dout;
+
+  axi_lite_register #(
+    .CLOCKING_MODE("common_clock"),
+    .ADDR_WIDTH(REG_ADDR_WIDTH),
+    .DATA_WIDTH(REG_DATA_WIDTH)
+  ) system_config_reg_interface (
     .s_axil_awvalid (s_axil_awvalid),
     .s_axil_awaddr  (s_axil_awaddr),
     .s_axil_awready (s_axil_awready),
@@ -117,8 +152,36 @@ module p2p_322mhz #(
     .s_axil_rresp   (s_axil_rresp),
     .s_axil_rready  (s_axil_rready),
 
+    .reg_en         (system_reg_en),
+    .reg_we         (system_reg_we),
+    .reg_addr       (system_reg_addr),
+    .reg_din        (system_reg_din),
+    .reg_dout       (system_reg_dout),
+
     .aclk           (axil_aclk),
-    .aresetn        (axil_aresetn)
+    .aresetn        (axil_aresetn),
+    .reg_clk        (axil_aclk),
+    .reg_rstn       (axil_aresetn)
+  );
+
+  //register file internal interface
+  wire internal_read;
+  wire [REG_ADDR_WIDTH - 1 : 0] internal_reg_addr;
+  wire [REG_DATA_WIDTH - 1 : 0] internal_reg_out;
+
+  register_file #(
+    .ADDR_WIDTH(REG_ADDR_WIDTH),
+    .DATA_WIDTH(REG_DATA_WIDTH)
+  ) register_file_inst (
+    .system_reg_en      (system_reg_en),
+    .system_reg_we      (system_reg_we),
+    .system_reg_addr    (system_reg_addr),
+    .system_reg_din     (system_reg_din),
+    .system_reg_dout    (system_reg_dout),
+
+    .internal_read      (internal_read),
+    .internal_reg_addr  (internal_reg_addr),
+    .internal_reg_out   (internal_reg_out)
   );
 
   generate for (genvar i = 0; i < NUM_CMAC_PORT; i++) begin

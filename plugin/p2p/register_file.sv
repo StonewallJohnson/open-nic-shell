@@ -19,9 +19,11 @@ module register_file #(
 
     /**
     TODO:
-    An initial block here that reads from a file (readmemb/h) to initialize
+     - An initial block here that reads from a file (readmemb/h) to initialize
     the contents of the registers. Use a module parameter for the path to the
     file?
+    - Make configurable for a given number of internal clients. Would make it possible
+    for both CMAC interfaces to read simultaneously
     **/
 
     always_latch begin

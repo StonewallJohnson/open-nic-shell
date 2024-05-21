@@ -168,6 +168,11 @@ module p2p_322mhz #(
   wire internal_read;
   wire [REG_ADDR_WIDTH - 1 : 0] internal_reg_addr;
   wire [REG_DATA_WIDTH - 1 : 0] internal_reg_out;
+  
+  //check the register
+  localparam int BLOCK_RX_REG = 1;
+  assign internal_read = 1;
+  assign internal_reg_addr = 1;
 
   register_file #(
     .ADDR_WIDTH(REG_ADDR_WIDTH),
@@ -244,7 +249,7 @@ module p2p_322mhz #(
       .TUSER_W (1),
       .MODE    ("full")
     ) rx_slice_0_inst (
-      .s_axis_tvalid (s_axis_cmac_rx_tvalid[i]),
+      .s_axis_tvalid (s_axis_cmac_rx_tvalid[i] & ~internal_reg_out),
       .s_axis_tdata  (s_axis_cmac_rx_tdata[`getvec(512, i)]),
       .s_axis_tkeep  (s_axis_cmac_rx_tkeep[`getvec(64, i)]),
       .s_axis_tlast  (s_axis_cmac_rx_tlast[i]),

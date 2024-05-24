@@ -1,21 +1,21 @@
 module register_file #(
     //I believe that the shell supports 4096 addresses for the 322mhz box 
-    parameter int ADDR_WIDTH = 12,
+    parameter int ENTRIES = 12,
     parameter int DATA_WIDTH =  32
 ) (
     //axi_lite_register interface (between system configuration)
     input wire system_reg_en,
     input wire system_reg_we,
-    input wire [ADDR_WIDTH - 1 : 0] system_reg_addr,
+    input wire [$clog2(ENTRIES) - 1 : 0] system_reg_addr,
     input wire [DATA_WIDTH - 1 : 0] system_reg_din,
     output logic [DATA_WIDTH - 1 : 0] system_reg_dout,
 
     //internal read interface
     input wire internal_read,
-    input wire [ADDR_WIDTH - 1 : 0] internal_reg_addr,
+    input wire [$clog2(ENTRIES) - 1 : 0] internal_reg_addr,
     output logic [DATA_WIDTH - 1 : 0] internal_reg_out    
 );
-    logic [DATA_WIDTH - 1 : 0] registers [2 ** ADDR_WIDTH];
+    logic [DATA_WIDTH - 1 : 0] registers [ENTRIES];
 
     /**
     TODO:
@@ -26,8 +26,9 @@ module register_file #(
     for both CMAC interfaces to read simultaneously
     **/
     initial begin
-        registers[1] = 0;
-        
+        for(int i = 0; i < ENTRIES; i++) begin
+            registers[i] = 0;
+        end        
     end
 
     always_latch begin

@@ -31,3 +31,5 @@ set_operating_conditions -design_power_budget 100
 # Read AR72607 for details.
 set_property C_USER_SCAN_CHAIN 1 [get_debug_cores dbg_hub]
 connect_debug_port dbg_hub/clk [get_nets ref_clk_100mhz]
+
+

@@ -95,35 +95,23 @@ module p2p_322mhz #(
     .clk          ({cmac_clk, axil_aclk}),
     .rstn         ({cmac_rstn, axil_aresetn})
   );
-
-  // axi_lite_slave #(
-  //   .REG_ADDR_W (12),
-  //   .REG_PREFIX (16'hB001)
-  // ) reg_inst (
-  //   .s_axil_awvalid (s_axil_awvalid),
-  //   .s_axil_awaddr  (s_axil_awaddr),
-  //   .s_axil_awready (s_axil_awready),
-  //   .s_axil_wvalid  (s_axil_wvalid),
-  //   .s_axil_wdata   (s_axil_wdata),
-  //   .s_axil_wready  (s_axil_wready),
-  //   .s_axil_bvalid  (s_axil_bvalid),
-  //   .s_axil_bresp   (s_axil_bresp),
-  //   .s_axil_bready  (s_axil_bready),
-  //   .s_axil_arvalid (s_axil_arvalid),
-  //   .s_axil_araddr  (s_axil_araddr),
-  //   .s_axil_arready (s_axil_arready),
-  //   .s_axil_rvalid  (s_axil_rvalid),
-  //   .s_axil_rdata   (s_axil_rdata),
-  //   .s_axil_rresp   (s_axil_rresp),
-  //   .s_axil_rready  (s_axil_rready),
-
-  //   .aclk           (axil_aclk),
-  //   .aresetn        (axil_aresetn)
-  // );
-
-  localparam int REG_ADDR_WIDTH = 12;
+    
+  localparam int NUM_REG = 12;
+  localparam int REG_ADDR_WIDTH = $clog2(NUM_REG);
   localparam int REG_DATA_WIDTH = 32;
   //register file system interface
+  (* MARK_DEBUG = "true" *) wire debug_s_axil_awvalid; 
+  (* MARK_DEBUG = "true" *) wire [31:0] debug_s_axil_awaddr;
+  (* MARK_DEBUG = "true" *) wire [1:0] debug_s_axis_adap_tx_322mhz_tvalid;
+  (* MARK_DEBUG = "true" *) wire [1:0] debug_m_axis_adap_rx_322mhz_tvalid;
+  (* MARK_DEBUG = "true" *) wire [1:0] debug_m_axis_cmac_tx_tvalid;
+  (* MARK_DEBUG = "true" *) wire [1:0] debug_s_axis_cmac_rx_tvalid;
+  assign debug_s_axil_awvalid = s_axil_awvalid;
+  assign debug_s_axil_awaddr = s_axil_awaddr;
+  assign debug_s_axis_adap_tx_322mhz_tvalid = s_axis_adap_tx_322mhz_tvalid;
+  assign debug_m_axis_adap_rx_322mhz_tvalid = m_axis_adap_rx_322mhz_tvalid;
+  assign debug_m_axis_cmac_tx_tvalid = m_axis_cmac_tx_tvalid;
+  assign debug_s_axis_cmac_rx_tvalid = s_axis_cmac_rx_tvalid;
   wire sytsem_reg_en;
   wire system_reg_we;
   wire [REG_ADDR_WIDTH - 1 : 0] system_reg_addr;
@@ -170,12 +158,12 @@ module p2p_322mhz #(
   wire [REG_DATA_WIDTH - 1 : 0] internal_reg_out;
   
   //check the register
-  localparam int BLOCK_RX_REG = 1;
+  localparam int BLOCK_RX_REG = 4;
   assign internal_read = 1;
   assign internal_reg_addr = BLOCK_RX_REG;
 
   register_file #(
-    .ADDR_WIDTH(REG_ADDR_WIDTH),
+    .ENTRIES(NUM_REG),
     .DATA_WIDTH(REG_DATA_WIDTH)
   ) register_file_inst (
     .system_reg_en      (system_reg_en),

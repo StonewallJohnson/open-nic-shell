@@ -173,6 +173,9 @@ module box_tb ();
     //     ref axil_aclk,
     //     ref cmac_clk
     // );
+        mod_rstn = 1;
+        mod_rst_done = 1;
+        tick_axil_clk(axil_aclk);
         tick_cmac_clk(cmac_clk);
         /**
         just a normal rx
@@ -209,18 +212,18 @@ module box_tb ();
         **/
         tick_axil_clk(axil_aclk);
         system_if.m.awvalid = 1;
-        system_if.m.awaddr = 1;
+        system_if.m.awaddr = 4;
         
         tick_axil_clk(axil_aclk);
-
-        system_if.m.awvalid = 0;
-        system_if.m.awaddr = 0;
-
         system_if.m.wvalid = 1;
         system_if.m.wdata = 1;
         system_if.m.wlast = 1;
         system_if.m.bready = 1;
+
+
         tick_axil_clk(axil_aclk);
+        system_if.m.awvalid = 0;
+        system_if.m.awaddr = 0;
         system_if.m.wvalid = 0;
         system_if.m.wdata = 0;
         system_if.m.wlast = 0;

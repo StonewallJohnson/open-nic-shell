@@ -82,7 +82,15 @@ module box_322mhz_address_map (
   input         aclk,
   input         aresetn
 );
-
+  (* MARK_DEBUG = "true" *) wire debug_s_axil_awvalid;
+  (* MARK_DEBUG = "true" *) wire [31:0] debug_s_axil_awaddr;
+  (* MARK_DEBUG = "true" *) wire debug_m_axil_p2p_awvalid;
+  (* MARK_DEBUG = "true" *) wire [31:0] debug_m_axil_p2p_awaddr;
+  assign debug_s_axil_awvalid = s_axil_awvalid;
+  assign debug_s_axil_awaddr = s_axil_awaddr;
+  assign debug_m_axil_p2p_awvalid = m_axil_p2p_awvalid;
+  assign debug_m_axil_p2p_awaddr = m_axil_p2p_awaddr;
+    
   localparam C_NUM_SLAVES  = 2;
 
   localparam C_P2P_INDEX   = 0;
